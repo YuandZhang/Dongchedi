@@ -8,6 +8,7 @@ import requests
 from lxml import etree
 from lxml import html
 import csv
+import pandas as pd
 def getcarid():
     caridls=[]
     carnamels=[]
@@ -63,7 +64,7 @@ def saveComment(commentls,carid,carname):
 
 
 
-def run():
+def Spider():
     caridls,carnamels=getcarid()
 
     for c in range(0,len(caridls)):
@@ -74,6 +75,14 @@ def run():
         root = getRoot(url)
         getComment(root, url,carid,carname)
 
+def TidyComment():
+    originfile='data/carcomment.csv'
+    tidyfile='data/carcomment_cleaned.csv'
+
+
+
+
+
 if __name__ == '__main__':
 
-    run()
+    Spider()

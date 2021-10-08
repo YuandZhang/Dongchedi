@@ -4,3 +4,5 @@
 # @Site    : 
 # @File    : Configuration.py
 # @Software: PyCharm
+class Config:
+    stopwords_file = '../data/hit_stopwords.txt'
