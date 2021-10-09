@@ -8,7 +8,8 @@ import requests
 from lxml import etree
 from lxml import html
 import csv
-import pandas as pd
+from utils.prepare_data import *
+
 def getcarid():
     caridls=[]
     carnamels=[]
@@ -30,7 +31,7 @@ def getRoot(url):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.80 Safari/537.36 Edg/86.0.622.43'}
     r=requests.get(url,headers=headers)
-    pages=etree=html.etree
+    # etree=html.etree
     root=etree.HTML(r.text)
     return root
 
@@ -52,17 +53,20 @@ def getComment(root,url,carid,carname):
                 continue#判断是否为空
             commentls.append(comment)
 
-    saveComment(commentls,carid,carname)
+    saveComment(commentls,carid,carname,'csv')
 
-def saveComment(commentls,carid,carname):
-    for i in range(0,len(commentls)):
-        with open('data/carcomment.csv',mode='a',encoding='utf-8',newline='') as dc:
-            dcwriter=csv.writer(dc)
-            dcwriter.writerow([carid,carname,commentls[i]])
+def saveComment(commentls,carid,carname,filetype):
 
-
-
-
+    if filetype=='csv':
+        for i in range(0, len(commentls)):
+            with open('data/carcomment_2.csv','a',encoding='utf-8',newline='') as dc:
+                rep_comment=ListCharReplace(commentls[i],'{','(')
+                dcwriter = csv.writer(dc, delimiter='{')
+                dcwriter.writerow([carid,carname,commentls[i]])
+    elif filetype=='txt':
+        for i in range(0, len(commentls)):
+            with open('data/carcomment.txt', mode='a', encoding='utf-8', newline='') as dc:
+                dc.writelines(carid+'||||'+carname+'||||'+commentls[i])
 
 def Spider():
     caridls,carnamels=getcarid()
@@ -76,13 +80,41 @@ def Spider():
         getComment(root, url,carid,carname)
 
 def TidyComment():
-    originfile='data/carcomment.csv'
-    tidyfile='data/carcomment_cleaned.csv'
+    originfile='data/carcomment_2.csv'
+    tidyfile='data/carcomment_cleaned.txt'
+    textid=1
+    with open(originfile, mode='r', encoding='utf-8', newline='')as ofile:
+        with open(tidyfile,mode='a',encoding='utf-8')as tfile:
+            lines=ofile.readlines()
+            for line in lines:
+                sen_ls=[]
+                senid=1
+                carid=line.split('{')[0]
+                carname=line.split('{')[1]
+                carcomment=line.split('{')[2][1:-2]
+#分割文本-去停用词-
+
+                split_comment_ls=seg_tail_split(carcomment)#分割成句子列表
+
+                print('正在写入{}'.format(str(textid)))
+                for sen in split_comment_ls:
+                    sen=remove_stopwords(sen)
+                    if len(sen)!=0:
+                        sen_ls.append(sen)#生成新的句子列表sen_ls
+                sen_len=len(sen_ls)#子句列表长度
+                tfile.writelines(str(textid) + sen_len+'\n')  # 写入文本序号,子句个数
+                tfile.writelines(carid + ',' + carname + '\n')  # 写入车ID，车辆名称
+                for _sen in sen_ls:
+                    tfile.writelines(str(senid)+','+_sen+'\n')
+                    senid=senid+1
+                textid=textid+1
+
+
 
 
 
 
 
 if __name__ == '__main__':
-
-    Spider()
+    # Spider()
+    TidyComment()
